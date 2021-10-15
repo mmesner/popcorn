@@ -47,14 +47,16 @@ empty_list () {
 	echo "Would you like to add some now? [y/n]"
 	read -r -p "> "
 	case ${REPLY} in
-		Y|y|Yes|yes|YES)	echo "Enter the names of movies you'd like to watch. Press <C-d> when done."
-							echo "cat > ${listfile}"
-							cat > "${listfile}"
-							echo "Your movie list now has $(wc -l "${listfile}" | cut -d " " -f 1) movie(s)."
-							;;
-		*)					echo "Bye!"
-							exit
-							;;
+		Y|y|Yes|yes|YES)
+			echo "Enter the names of movies you'd like to watch. Press <C-d> when done."
+			echo "cat > ${listfile}"
+			cat > "${listfile}"
+			echo "Your movie list now has $(wc -l "${listfile}" | cut -d " " -f 1) movie(s)."
+			;;
+		*)
+			echo "Bye!"
+			exit
+			;;
 	esac
 	return
 }
@@ -96,42 +98,52 @@ reset () {
 4. Quit"
 	read -r -p "> "
 	case "${REPLY}" in
-		1)	echo "Are you sure? This action cannot be undone. [y/n]"
+		1)
+			echo "Are you sure? This action cannot be undone. [y/n]"
 			read -r -p "> "
 			case "${REPLY}" in
 									# in this function, use 'true >' or 'truncate -s 0'?
-				Y|y|Yes|YES|yes)	true > "${listfile}"
-									echo "Cleared your watchlist."
-									;;
-				*)					echo "Changed nothing. Consider backing up your files with '${progname} backup'."
-									exit
-									;;
+				Y|y|Yes|YES|yes)
+					true > "${listfile}"
+					echo "Cleared your watchlist."
+					;;
+				*)
+					echo "Changed nothing. Consider backing up your files with '${progname} backup'."
+					exit
+					;;
 			esac
 			;;
-		2)	echo "Are you sure? This action cannot be undone. [y/n]"
+		2)
+			echo "Are you sure? This action cannot be undone. [y/n]"
 			read -r -p "> "
 			case "${REPLY}" in
-				Y|y|Yes|YES|yes)	true > "${seenfile}"
-									echo "Cleared your seenlist."
-									;;
-				*)					echo "Changed nothing. Consider backing up your files with '${progname} backup'."
-									exit
-									;;
+				Y|y|Yes|YES|yes)
+					true > "${seenfile}"
+					echo "Cleared your seenlist."
+					;;
+				*)
+					echo "Changed nothing. Consider backing up your files with '${progname} backup'."
+					exit
+					;;
 			esac
 			;;
-		3)  echo "Are you sure? This action cannot be undone. [y/n]"
+		3)  
+			echo "Are you sure? This action cannot be undone. [y/n]"
 			read -r -p "> "
 			case "${REPLY}" in
-				Y|y|Yes|YES|yes)	true > "${listfile}"
-									true > "${seenfile}" 
-									echo "Cleared both your watchlist and seenlist."
-									;;
-				*)					echo "Changed nothing. Consider backing up your files with '${progname} backup'."
-									exit
-									;;
+				Y|y|Yes|YES|yes)
+					true > "${listfile}"
+					true > "${seenfile}" 
+					echo "Cleared both your watchlist and seenlist."
+					;;
+				*)
+					echo "Changed nothing. Consider backing up your files with '${progname} backup'."
+					exit
+					;;
 			esac
 			;;
-		*)	echo "Changed nothing."
+		*)
+			echo "Changed nothing."
 			exit
 			;;
 	esac
@@ -144,19 +156,23 @@ search_batch () {
 			echo "'${1}' is on your watchlist. Would you like to remove it? [y/n]"
 			read -r -p "> "
 			case "${REPLY}" in
-				Y|y|Yes|YES|yes)	sed -i "/^${1}$/d" "${listfile}"
-									echo "Removed '${1}' from your watchlist."
-									;;
-				*)					;;
+				Y|y|Yes|YES|yes)
+					sed -i "/^${1}$/d" "${listfile}"
+					echo "Removed '${1}' from your watchlist."
+					;;
+				*)
+					;;
 			esac
 		else
 			echo "'${1}' is not on your list. Would you like to add it? [y/n]"
 			read -r -p "> "
 			case "${REPLY}" in
-				Y|y|Yes|YES|yes)	echo "${1}" >> "${listfile}"
-									echo "Added '${1}' to your watchlist."
-									;;
-				*)					;;
+				Y|y|Yes|YES|yes)
+					echo "${1}" >> "${listfile}"
+					echo "Added '${1}' to your watchlist."
+					;;
+				*)
+					;;
 			esac
 		fi
 		shift
@@ -244,52 +260,64 @@ fi
 # process command line options
 while [ -n "${1}" ]; do
 	case "${1}" in
-		add)			shift
-						add_batch "$@"
-						exit
-						;;
+		add)
+			shift
+			add_batch "$@"
+			exit
+			;;
 		# should the backup process be automatic? 
-		backup)			cp "${listfile}" "${listbak}"
-						cp "${seenfile}" "${seenbak}"
-						echo "Watchlist and seenlist backed up."
-						exit
-						;;
-		count)			echo "Your movie list has $(wc -l "${listfile}" | cut -d " " -f 1) movie(s)."
-						exit
-						;;
-		help|-h|--help)	usage
-						exit
-						;;
-		list)			cat "${listfile}"
-						exit
-						;;
-		remove)			shift
-						remove_batch "$@"
-						exit
-						;;
-		reset)			reset
-						# deliberately not exiting so that it moves to empty_list
-						;;
+		backup)
+			cp "${listfile}" "${listbak}"
+			cp "${seenfile}" "${seenbak}"
+			echo "Watchlist and seenlist backed up."
+			exit
+			;;
+		count)
+			echo "Your movie list has $(wc -l "${listfile}" | cut -d " " -f 1) movie(s)."
+			exit
+			;;
+		help|-h|--help)
+			usage
+			exit
+			;;
+		list)
+			cat "${listfile}"
+			exit
+			;;
+		remove)
+			shift
+			remove_batch "$@"
+			exit
+			;;
+		reset)
+			reset
+			# deliberately not exiting so that it moves to empty_list
+			;;
 		# is this really needed?
-		restore)		cat "${listbak}" > "${listfile}"
-						cat "${seenbak}" > "${seenfile}"
-						echo "Watchlist and seenlist restored from backups."
-						exit
-						;;
-		search)			shift
-						search_batch "$@"
-						exit
-						;;
-		seen)			cat "${seenfile}"
-						exit
-						;;
-		watched)		shift
-						watched_batch "$@"
-						exit
-						;;
-		*)				echo "Bad usage. Try '${progname} help' for more information."
-						exit
-						;;
+		restore)
+			cat "${listbak}" > "${listfile}"
+			cat "${seenbak}" > "${seenfile}"
+			echo "Watchlist and seenlist restored from backups."
+			exit
+			;;
+		search)
+			shift
+			search_batch "$@"
+			exit
+			;;
+		seen)
+			cat "${seenfile}"
+			exit
+			;;
+		watched)
+			shift
+			watched_batch "$@"
+			exit
+			;;
+		*)
+			echo "Bad usage. Try '${progname} help' for more information."
+			exit
+			;;
 	esac
 	shift
 done
@@ -304,24 +332,29 @@ if [ -e "${lastwatched}" ]; then
 	echo "Did you end up watching '${movie_last}'? [y/n/q]"
 	read -r -p "> "
 	case "${REPLY}" in
-		Y|y|Yes|yes|YES)	update_list
-							echo "Updated your watchlist and seenlist."
-							rm "${lastwatched}"
-							exit
-							;;
-		Q|q|quit|Quit|QUIT)	echo "Bye!"
-							exit
-							;;
-		*)					echo "Okay, would you like to watch a different movie?"
-							read -r -p "> "
-							case "${REPLY}" in
-								Y|y|Yes|yes|YES)	rm "${lastwatched}"
-													;;
-								*)					echo "Bye!"
-													exit
-													;;
-							esac
-							;;
+		Y|y|Yes|yes|YES)
+			update_list
+			echo "Updated your watchlist and seenlist."
+			rm "${lastwatched}"
+			exit
+			;;
+		Q|q|quit|Quit|QUIT)
+			echo "Bye!"
+			exit
+			;;
+		*)
+			echo "Okay, would you like to watch a different movie?"
+			read -r -p "> "
+			case "${REPLY}" in
+				Y|y|Yes|yes|YES)
+					rm "${lastwatched}"
+					;;
+				*)
+					echo "Bye!"
+					exit
+					;;
+			esac
+			;;
 	esac
 fi
 
@@ -333,10 +366,12 @@ if [ -z "$(cat "${listfile}")" ]; then
 	echo "Would you like to pick a movie now?"
 	read -r -p "> "
 	case "${REPLY}" in
-		Y|y|Yes|yes|YES)	;;
-		*)					echo "Bye!"
-							exit
-							;;
+		Y|y|Yes|yes|YES)
+			;;
+		*)
+			echo "Bye!"
+			exit
+			;;
 	esac
 fi
 
@@ -354,34 +389,39 @@ while true; do
 		echo "Would you like to watch '${movie_candidate}'? [y/n/q]"
 		read -r -p "> "
 		case "${REPLY}" in
-			Y|y|Yes|yes|YES)	echo "Great! I'll ask you how it went later."
-								echo "${movie_candidate}" > "${lastwatched}"
-								if [ -e "${notwatching}" ]; then
-									cleanup
-								fi
-								exit
-								;;
-			Q|q|quit|Quit|QUIT)	echo "Bye!"
-								if [ -e "${notwatching}" ]; then
-									cleanup
-								fi
-								exit
-								;;
-			*)					reselect
-								continue
-								;;
+			Y|y|Yes|yes|YES)
+				echo "Great! I'll ask you how it went later."
+				echo "${movie_candidate}" > "${lastwatched}"
+				if [ -e "${notwatching}" ]; then
+					cleanup
+				fi
+				exit
+				;;
+			Q|q|quit|Quit|QUIT)
+				echo "Bye!"
+				if [ -e "${notwatching}" ]; then
+					cleanup
+				fi
+				exit
+				;;
+			*)
+				reselect
+				continue
+				;;
 		esac
 	else
 		echo "There are no more movies on your list. Do you want to go through it again?"
 		read -r -p "> "
 		case "${REPLY}" in 
-			Y|y|Yes|YES|yes)	cleanup
-								continue 2
-								;;
-			*)					cleanup
-								echo "Bye!"
-								exit
-								;;
+			Y|y|Yes|YES|yes)
+				cleanup
+				continue 2
+				;;
+			*)
+				cleanup
+				echo "Bye!"
+				exit
+				;;
 		esac
 	fi
 done
