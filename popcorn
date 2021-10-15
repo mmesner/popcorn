@@ -168,7 +168,7 @@ search_batch () {
 update_list () {
 	sed -i "/^${movie_last}$/d" "${listfile}"
 	# do something better with this?
-	echo "'${movie_last}' on $(date +%D)" >> "${seenfile}"
+	echo "${movie_last} on $(date +%D)" >> "${seenfile}"
 	sort "${seenfile}" -o "${seenfile}"
 	return
 }
