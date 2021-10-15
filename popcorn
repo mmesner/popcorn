@@ -1,0 +1,386 @@
+#!/bin/bash
+#
+# popcorn: a small program to offer movie suggestions and manage a movie watchlist
+
+PROGNAME="$(basename "$0")"
+
+# files used for the script
+LASTWATCHED=/var/tmp/lastwatched.tmp
+LISTDIR="$HOME"/.local/share/"$PROGNAME"
+LISTBAK="$LISTDIR"/watchlist.bak
+LISTFILE="$LISTDIR"/watchlist
+NOTWATCHING=/tmp/notwatching.tmp
+SEENBAK="$LISTDIR"/seenlist.bak
+SEENFILE="$LISTDIR"/seenlist
+
+
+add_batch () {
+	local addcount=0
+
+	while [ $# -gt 0 ]; do
+		if grep -q -i "^$1$" "$LISTFILE"; then
+			echo "'$1' is already on your watchlist."
+			shift
+		else
+			echo "$1" >> "$LISTFILE"
+			addcount=$((addcount + 1))
+			shift
+		fi
+	done
+	sort "$LISTFILE" -o "$LISTFILE"
+	echo "Added $addcount movie(s) to your watchlist."
+	return
+}
+
+cleanup () {
+	cat "$NOTWATCHING" >> "$LISTFILE"
+	sort "$LISTFILE" -o "$LISTFILE"
+	rm "$NOTWATCHING"
+	return
+}
+
+# replace this with just a recomendation to use add_batch??
+empty_list () {
+	clear
+	echo "Uh-oh, you don't seem to have any movies on your list."
+	echo "Would you like to add some now? [y/n]"
+	read -r -p "> "
+	case $REPLY in
+		Y|y|Yes|yes|YES)	echo "Enter the names of movies you'd like to watch. Press <C-d> when done."
+							echo "cat > $LISTFILE"
+							cat > "$LISTFILE"
+							echo "Your movie list now has $(wc -l "$LISTFILE" | cut -d " " -f 1) movie(s)."
+							;;
+		*)					echo "Bye!"
+							exit
+							;;
+	esac
+	return
+}
+
+gen_movie () {
+	sort -R "$LISTFILE" | head -n 1
+	return
+}
+
+remove_batch () {
+	local rmcount=0
+
+	while [ $# -gt 0 ]; do
+		if grep -q -i "^$1$" "$LISTFILE"; then
+			sed -i "/^$1$/d" "$LISTFILE"
+			rmcount=$((rmcount + 1))
+			shift
+		else
+			echo "'$1' is not on your watchlist."
+			shift
+		fi
+	done
+	echo "Removed $rmcount movie(s) from your watchlist."
+	return
+}
+
+reselect () {
+	sed -i "/^$movie_candidate$/d" "$LISTFILE"
+	echo "$movie_candidate" >> "$NOTWATCHING"
+	return
+}
+
+reset () {
+	# uses 1,2,3,4 instead of the letters used elsewhere. Change?
+	echo "Which file would you like to reset?
+1. Watchlist at $LISTFILE
+2. Seenlist at $SEENFILE
+3. Both
+4. Quit"
+	read -r -p "> "
+	case "$REPLY" in
+		1)	echo "Are you sure? This action cannot be undone. [y/n]"
+			read -r -p "> "
+			case "$REPLY" in
+									# in this function, use 'true >' or 'truncate -s 0'?
+				Y|y|Yes|YES|yes)	true > "$LISTFILE"
+									echo "Cleared your watchlist."
+									;;
+				*)					echo "Changed nothing. Consider backing up your files with 'popcorn backup'."
+									exit
+									;;
+			esac
+			;;
+		2)	echo "Are you sure? This action cannot be undone. [y/n]"
+			read -r -p "> "
+			case "$REPLY" in
+				Y|y|Yes|YES|yes)	true > "$SEENFILE"
+									echo "Cleared your seenlist."
+									;;
+				*)					echo "Changed nothing. Consider backing up your files with 'popcorn backup'."
+									exit
+									;;
+			esac
+			;;
+		3)  echo "Are you sure? This action cannot be undone. [y/n]"
+			read -r -p "> "
+			case "$REPLY" in
+				Y|y|Yes|YES|yes)	true > "$LISTFILE"
+									true > "$SEENFILE" 
+									echo "Cleared both your watchlist and seenlist."
+									;;
+				*)					echo "Changed nothing. Consider backing up your files with 'popcorn backup'."
+									exit
+									;;
+			esac
+			;;
+		*)	echo "Changed nothing."
+			exit
+			;;
+	esac
+	rm "$LASTWATCHED"
+}
+
+search_batch () {
+	while [ $# -gt 0 ]; do
+		if grep -q -i "^$1$" "$LISTFILE"; then
+			echo "'$1' is on your watchlist. Would you like to remove it? [y/n]"
+			read -r -p "> "
+			case "$REPLY" in
+				Y|y|Yes|YES|yes)	sed -i "/^$1$/d" "$LISTFILE"
+									echo "Removed '$1' from your watchlist."
+									;;
+				*)					;;
+			esac
+		else
+			echo "'$1' is not on your list. Would you like to add it? [y/n]"
+			read -r -p "> "
+			case "$REPLY" in
+				Y|y|Yes|YES|yes)	echo "$1" >> "$LISTFILE"
+									echo "Added '$1' to your watchlist."
+									;;
+				*)					;;
+			esac
+		fi
+		shift
+	done
+	sort "$LISTFILE" -o "$LISTFILE"
+	return
+}
+
+update_list () {
+	sed -i "/^$movie_last$/d" "$LISTFILE"
+	# do something better with this?
+	echo "'$movie_last' on $(date +%D)" >> "$SEENFILE"
+	sort "$SEENFILE" -o "$SEENFILE"
+	return
+}
+
+usage () {
+	# is there a better way to format this?
+	cat <<- EOF
+
+	$PROGNAME: Interactive program to manage a movie watchlist
+
+	Usage: 
+
+	  $PROGNAME [command]
+
+	  When no command is given, $PROGNAME functions in interactive mode.
+
+	Commands:
+
+	  add "Movie Title"      Add one or more movies to your watchlist. Place each title within
+                         its own set of quotes.
+	  backup                 Create a backup of your lists
+	  count                  Display the amount of movies in your watchlist
+	  help                   Display program use information
+	  list                   List the contents of your watchlist
+	  remove "Movie Title"   Remove one or more movies from your watchlist. Place each title within
+                         its own set of quotes.
+	  reset                  Clear either the watchlist, seenlist, or both
+	  restore                Restore your lists from backup
+	  search "Movie Title"   Search your watchlist for one or more movies. Place each title within
+                         its own set of quotes.
+	  seen                   List the contents of your seenlist
+	  watched "Movie Title"  Remove one or more movies from your watchlist and place them on your
+                         seenlist. Place each title within its own set of quotes. If a movie is not
+                         on your watchlist, it will still be added to your seenlist.
+
+	EOF
+	return
+}
+
+watched_batch () {
+	local addcount=0
+	local rmcount=0
+
+	while [ $# -gt 0 ]; do
+		echo "$1 on $(date +%D)" >> "$SEENFILE"
+		addcount=$((addcount + 1))
+		if grep -q -i "^$1$" "$LISTFILE"; then
+			sed -i "/^$1$/d" "$LISTFILE"
+			rmcount=$((rmcount + 1))
+		fi
+		shift
+	done
+	sort "$SEENFILE" -o "$SEENFILE"
+	echo "Removed $rmcount movie(s) from your watchlist, and added $addcount movie(s) to your seenlist."
+	return
+}
+
+
+# check for the existance of the files and directories needed in the script
+if [ ! -e "$LISTDIR" ]; then
+	touch "$LISTDIR"
+fi
+
+if [ ! -e "$LISTFILE" ]; then
+	touch "$LISTFILE"
+fi
+
+if [ ! -e "$SEENFILE" ]; then
+	touch "$SEENFILE"
+fi
+
+
+# process command line options
+while [ -n "$1" ]; do
+	case "$1" in
+		add)			shift
+						add_batch "$@"
+						exit
+						;;
+		# should the backup process be automatic? 
+		backup)			cp "$LISTFILE" "$LISTBAK"
+						cp "$SEENFILE" "$SEENBAK"
+						echo "Watchlist and seenlist backed up."
+						exit
+						;;
+		count)			echo "Your movie list has $(wc -l "$LISTFILE" | cut -d " " -f 1) movie(s)."
+						exit
+						;;
+		help|-h|--help)	usage
+						exit
+						;;
+		list)			cat "$LISTFILE"
+						exit
+						;;
+		remove)			shift
+						remove_batch "$@"
+						exit
+						;;
+		reset)			reset
+						# deliberately not exiting so that it moves to empty_list
+						;;
+		# is this really needed?
+		restore)		cat "$LISTBAK" > "$LISTFILE"
+						cat "$SEENBAK" > "$SEENFILE"
+						echo "Watchlist and seenlist restored from backups."
+						exit
+						;;
+		search)			shift
+						search_batch "$@"
+						exit
+						;;
+		seen)			cat "$SEENFILE"
+						exit
+						;;
+		watched)		shift
+						watched_batch "$@"
+						exit
+						;;
+		*)				echo "Bad usage. Try '$PROGNAME help' for more information."
+						exit
+						;;
+	esac
+	shift
+done
+
+
+# check to see if you watched the movie you chose last time the program was run
+if [ -e "$LASTWATCHED" ]; then
+
+	movie_last="$(cat "$LASTWATCHED")"
+
+	clear
+	echo "Did you end up watching '$movie_last'? [y/n/q]"
+	read -r -p "> "
+	case "$REPLY" in
+		Y|y|Yes|yes|YES)	update_list
+							echo "Updated your watchlist and seenlist."
+							rm "$LASTWATCHED"
+							exit
+							;;
+		Q|q|quit|Quit|QUIT)	echo "Bye!"
+							exit
+							;;
+		*)					echo "Okay, would you like to watch a different movie?"
+							read -r -p "> "
+							case "$REPLY" in
+								Y|y|Yes|yes|YES)	rm "$LASTWATCHED"
+													;;
+								*)					echo "Bye!"
+													exit
+													;;
+							esac
+							;;
+	esac
+fi
+
+
+
+# if an empty movie list is encountered
+if [ -z "$(cat "$LISTFILE")" ]; then
+	empty_list
+	echo "Would you like to pick a movie now?"
+	read -r -p "> "
+	case "$REPLY" in
+		Y|y|Yes|yes|YES)	;;
+		*)					echo "Bye!"
+							exit
+							;;
+	esac
+fi
+
+
+# pick a random movie from your list and offer it
+#
+# there MUST be a better way to do this, perhaps with 
+# sort -R "$LISTFILE" | while read; do
+#	for i in $REPLY; do
+clear
+echo "Picking a movie for you..."
+while true; do
+	if [ -s "$LISTFILE" ]; then
+		movie_candidate="$(gen_movie)"
+		echo "Would you like to watch '$movie_candidate'? [y/n/q]"
+		read -r -p "> "
+		case "$REPLY" in
+			Y|y|Yes|yes|YES)	echo "Great! I'll ask you how it went later."
+								echo "$movie_candidate" > "$LASTWATCHED"
+								if [ -e "$NOTWATCHING" ]; then
+									cleanup
+								fi
+								exit
+								;;
+			Q|q|quit|Quit|QUIT)	echo "Bye!"
+								if [ -e "$NOTWATCHING" ]; then
+									cleanup
+								fi
+								exit
+								;;
+			*)					reselect
+								continue
+								;;
+		esac
+	else
+		echo "There are no more movies on your list. Do you want to go through it again?"
+		read -r -p "> "
+		case "$REPLY" in 
+			Y|y|Yes|YES|yes)	cleanup
+								continue 2
+								;;
+			*)					cleanup
+								echo "Bye!"
+								exit
+								;;
+		esac
+	fi
+done
