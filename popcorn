@@ -5,11 +5,12 @@
 PROGNAME="$(basename "$0")"
 
 # files used for the script
-LASTWATCHED=/var/tmp/lastwatched.tmp
 LISTDIR="$HOME"/.local/share/"$PROGNAME"
+
+LASTWATCHED="$LISTDIR"/lastwatched.bak
 LISTBAK="$LISTDIR"/watchlist.bak
 LISTFILE="$LISTDIR"/watchlist
-NOTWATCHING=/tmp/notwatching.tmp
+NOTWATCHING="$LISTDIR"/notwatching.bak
 SEENBAK="$LISTDIR"/seenlist.bak
 SEENFILE="$LISTDIR"/seenlist
 
@@ -228,7 +229,7 @@ watched_batch () {
 
 # check for the existance of the files and directories needed in the script
 if [ ! -e "$LISTDIR" ]; then
-	touch "$LISTDIR"
+	mkdir "$LISTDIR"
 fi
 
 if [ ! -e "$LISTFILE" ]; then
