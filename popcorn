@@ -21,7 +21,7 @@ add_batch () {
 	addcount=0
 
 	while [ $# -gt 0 ]; do
-		if grep -q -i "^${1}$" "${listfile}"; then
+		if grep -Fixq "${1}" "${listfile}"; then
 			echo "'${1}' is already on your watchlist."
 			shift
 		else
@@ -73,7 +73,7 @@ remove_batch () {
 	rmcount=0
 
 	while [ $# -gt 0 ]; do
-		if grep -q -i "^${1}$" "${listfile}"; then
+		if grep -Fixq "${1}" "${listfile}"; then
 			sed -i "/^${1}$/d" "${listfile}"
 			rmcount=$((rmcount + 1))
 			shift
@@ -155,7 +155,7 @@ reset () {
 
 search_batch () {
 	while [ $# -gt 0 ]; do
-		if grep -q -i "^${1}$" "${listfile}"; then
+		if grep -Fixq "${1}" "${listfile}"; then
 			echo "'${1}' is on your watchlist. Would you like to remove it? [y/n]"
 			read -r -p "> "
 			case "${REPLY}" in
@@ -236,7 +236,7 @@ watched_batch () {
 	while [ $# -gt 0 ]; do
 		echo "${1} on $(date +%D)" >> "${seenfile}"
 		addcount=$((addcount + 1))
-		if grep -q -i "^${1}$" "${listfile}"; then
+		if grep -Fixq "${1}" "${listfile}"; then
 			sed -i "/^${1}$/d" "${listfile}"
 			rmcount=$((rmcount + 1))
 		fi
