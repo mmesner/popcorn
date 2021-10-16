@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # popcorn: a small program to offer movie suggestions and manage a movie watchlist
 
@@ -7,16 +7,18 @@ progname="${0##*/}"
 # files used for the script
 listdir="${HOME}/.local/share/${progname}"
 
-lastwatched="${listdir}/lastwatched.bak"
+lastwatched="${listdir}/lastwatched.tmp"
 listbak="${listdir}/watchlist.bak"
 listfile="${listdir}/watchlist"
-notwatching="${listdir}/notwatching.bak"
+notwatching="${listdir}/notwatching.tmp"
 seenbak="${listdir}/seenlist.bak"
 seenfile="${listdir}/seenlist"
+sortfile="${listdir}/sortfile.tmp"
 
 
 add_batch () {
-	local addcount=0
+	local addcount
+	addcount=0
 
 	while [ $# -gt 0 ]; do
 		if grep -q -i "^${1}$" "${listfile}"; then
@@ -28,14 +30,14 @@ add_batch () {
 			shift
 		fi
 	done
-	sort "${listfile}" -o "${listfile}"
+	sort "${listfile}" -o "${sortfile}" && mv "${sortfile}" "${listfile}"
 	echo "Added ${addcount} movie(s) to your watchlist."
 	return
 }
 
 cleanup () {
 	cat "${notwatching}" >> "${listfile}"
-	sort "${listfile}" -o "${listfile}"
+	sort "${listfile}" -o "${sortfile}" && mv "${sortfile}" "${listfile}"
 	rm "${notwatching}"
 	return
 }
@@ -51,7 +53,7 @@ empty_list () {
 			echo "Enter the names of movies you'd like to watch. Press <C-d> when done."
 			echo "cat > ${listfile}"
 			cat > "${listfile}"
-			echo "Your movie list now has $(wc -l "${listfile}" | cut -d " " -f 1) movie(s)."
+			echo "Your movie list now has $(wc -l < "$listfile") movie(s)."
 			;;
 		*)
 			echo "Bye!"
@@ -62,12 +64,13 @@ empty_list () {
 }
 
 gen_movie () {
-	sort -R "${listfile}" | head -n 1
+	shuf "${listfile}" | head -n 1
 	return
 }
 
 remove_batch () {
-	local rmcount=0
+	local rmcount
+	rmcount=0
 
 	while [ $# -gt 0 ]; do
 		if grep -q -i "^${1}$" "${listfile}"; then
@@ -104,7 +107,7 @@ reset () {
 			case "${REPLY}" in
 									# in this function, use 'true >' or 'truncate -s 0'?
 				Y|y|Yes|YES|yes)
-					true > "${listfile}"
+					: > "${listfile}"
 					echo "Cleared your watchlist."
 					;;
 				*)
@@ -118,7 +121,7 @@ reset () {
 			read -r -p "> "
 			case "${REPLY}" in
 				Y|y|Yes|YES|yes)
-					true > "${seenfile}"
+					: > "${seenfile}"
 					echo "Cleared your seenlist."
 					;;
 				*)
@@ -132,8 +135,8 @@ reset () {
 			read -r -p "> "
 			case "${REPLY}" in
 				Y|y|Yes|YES|yes)
-					true > "${listfile}"
-					true > "${seenfile}" 
+					: > "${listfile}"
+					: > "${seenfile}" 
 					echo "Cleared both your watchlist and seenlist."
 					;;
 				*)
@@ -177,7 +180,7 @@ search_batch () {
 		fi
 		shift
 	done
-	sort "${listfile}" -o "${listfile}"
+	sort "${listfile}" -o "${sortfile}" && mv "${sortfile}" "${listfile}"
 	return
 }
 
@@ -185,7 +188,7 @@ update_list () {
 	sed -i "/^${movie_last}$/d" "${listfile}"
 	# do something better with this?
 	echo "${movie_last} on $(date +%D)" >> "${seenfile}"
-	sort "${seenfile}" -o "${seenfile}"
+	sort "${seenfile}" -o "${sortfile}" && mv "${sortfile}" "${seenfile}"
 	return
 }
 
@@ -225,8 +228,9 @@ usage () {
 }
 
 watched_batch () {
-	local addcount=0
-	local rmcount=0
+	local addcount rmcount
+	addcount=0
+	rmcount=0
 
 	while [ $# -gt 0 ]; do
 		echo "${1} on $(date +%D)" >> "${seenfile}"
@@ -237,7 +241,7 @@ watched_batch () {
 		fi
 		shift
 	done
-	sort "${seenfile}" -o "${seenfile}"
+	sort "${seenfile}" -o "${sortfile}" && mv "${sortfile}" "${seenfile}"
 	echo "Removed ${rmcount} movie(s) from your watchlist, and added ${addcount} movie(s) to your seenlist."
 	return
 }
@@ -273,7 +277,7 @@ while [ -n "${1}" ]; do
 			exit
 			;;
 		count)
-			echo "Your movie list has $(wc -l "${listfile}" | cut -d " " -f 1) movie(s)."
+			echo "Your movie list has $(wc -l < "$listfile" ) movie(s)."
 			exit
 			;;
 		help|-h|--help)
@@ -326,7 +330,7 @@ done
 # check to see if you watched the movie you chose last time the program was run
 if [ -e "${lastwatched}" ]; then
 
-	movie_last="$(cat "${lastwatched}")"
+	movie_last="$(< "${lastwatched}")"
 
 	clear
 	echo "Did you end up watching '${movie_last}'? [y/n/q]"
