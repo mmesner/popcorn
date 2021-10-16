@@ -319,8 +319,8 @@ while [ -n "${1}" ]; do
 			exit
 			;;
 		*)
-			echo "Bad usage. Try '${progname} help' for more information."
-			exit
+			echo "Bad usage. Try '${progname} help' for more information." >&2
+			exit 1
 			;;
 	esac
 	shift
