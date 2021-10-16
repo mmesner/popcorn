@@ -222,6 +222,7 @@ usage () {
 	  watched "Movie Title"  Remove one or more movies from your watchlist and place them on your
                          seenlist. Place each title within its own set of quotes. If a movie is not
                          on your watchlist, it will still be added to your seenlist.
+	  version              Print version number
 
 	EOF
 	return
@@ -280,7 +281,7 @@ while [ -n "${1}" ]; do
 			echo "Your movie list has $(wc -l < "$listfile" ) movie(s)."
 			exit
 			;;
-		help|-h|--help)
+		help|--help)
 			usage
 			exit
 			;;
@@ -316,6 +317,10 @@ while [ -n "${1}" ]; do
 		watched)
 			shift
 			watched_batch "$@"
+			exit
+			;;
+		version|--version)
+			printf '%s 0.1.1\n' "${progname}"
 			exit
 			;;
 		*)
