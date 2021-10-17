@@ -20,13 +20,13 @@ add_batch () {
 	local addcount
 	addcount=0
 
-	while [ $# -gt 0 ]; do
+	while (( "$#" > 0 )); do
 		if grep -Fixq "${1}" "${listfile}"; then
 			echo "'${1}' is already on your watchlist."
 			shift
 		else
 			echo "${1}" >> "${listfile}"
-			addcount=$((addcount + 1))
+			(( addcount++ ))
 			shift
 		fi
 	done
@@ -72,10 +72,10 @@ remove_batch () {
 	local rmcount
 	rmcount=0
 
-	while [ $# -gt 0 ]; do
+	while (( "$#" > 0 )); do
 		if grep -Fixq "${1}" "${listfile}"; then
 			sed -i "/^${1}$/d" "${listfile}"
-			rmcount=$((rmcount + 1))
+			(( rmcount++ ))
 			shift
 		else
 			echo "'${1}' is not on your watchlist."
@@ -105,7 +105,6 @@ reset () {
 			echo "Are you sure? This action cannot be undone. [y/n]"
 			read -r -p "> "
 			case "${REPLY}" in
-									# in this function, use 'true >' or 'truncate -s 0'?
 				Y|y|Yes|YES|yes)
 					: > "${listfile}"
 					echo "Cleared your watchlist."
@@ -154,7 +153,7 @@ reset () {
 }
 
 search_batch () {
-	while [ $# -gt 0 ]; do
+	while (( "$#" > 0 )); do
 		if grep -Fixq "${1}" "${listfile}"; then
 			echo "'${1}' is on your watchlist. Would you like to remove it? [y/n]"
 			read -r -p "> "
@@ -233,12 +232,12 @@ watched_batch () {
 	addcount=0
 	rmcount=0
 
-	while [ $# -gt 0 ]; do
+	while (( "$#" > 0 )); do
 		echo "${1} on $(date +%D)" >> "${seenfile}"
-		addcount=$((addcount + 1))
+		(( addcount++ ))
 		if grep -Fixq "${1}" "${listfile}"; then
 			sed -i "/^${1}$/d" "${listfile}"
-			rmcount=$((rmcount + 1))
+			(( rmcount++ ))
 		fi
 		shift
 	done
@@ -249,21 +248,21 @@ watched_batch () {
 
 
 # check for the existance of the files and directories needed in the script
-if [ ! -e "${listdir}" ]; then
+if [[ ! -e "${listdir}" ]]; then
 	mkdir "${listdir}"
 fi
 
-if [ ! -e "${listfile}" ]; then
+if [[ ! -e "${listfile}" ]]; then
 	touch "${listfile}"
 fi
 
-if [ ! -e "${seenfile}" ]; then
+if [[ ! -e "${seenfile}" ]]; then
 	touch "${seenfile}"
 fi
 
 
 # process command line options
-while [ -n "${1}" ]; do
+while [[ -n "${1}" ]]; do
 	case "${1}" in
 		add)
 			shift
@@ -333,7 +332,7 @@ done
 
 
 # check to see if you watched the movie you chose last time the program was run
-if [ -e "${lastwatched}" ]; then
+if [[ -e "${lastwatched}" ]]; then
 
 	movie_last="$(< "${lastwatched}")"
 
@@ -370,7 +369,7 @@ fi
 
 
 # if an empty movie list is encountered
-if [ -z "$(cat "${listfile}")" ]; then
+if [[ ! -s "${listfile}" ]]; then
 	empty_list
 	echo "Would you like to pick a movie now?"
 	read -r -p "> "
@@ -394,7 +393,7 @@ fi
 clear
 echo "Picking a movie for you..."
 while true; do
-	if [ -s "${listfile}" ]; then
+	if [[ -s "${listfile}" ]]; then
 		movie_candidate="$(gen_movie)"
 		echo "Would you like to watch '${movie_candidate}'? [y/n/q]"
 		read -r -p "> "
@@ -402,14 +401,14 @@ while true; do
 			Y|y|Yes|yes|YES)
 				echo "Great! I'll ask you how it went later."
 				echo "${movie_candidate}" > "${lastwatched}"
-				if [ -e "${notwatching}" ]; then
+				if [[ -e "${notwatching}" ]]; then
 					cleanup
 				fi
 				exit
 				;;
 			Q|q|quit|Quit|QUIT)
 				echo "Bye!"
-				if [ -e "${notwatching}" ]; then
+				if [[ -e "${notwatching}" ]]; then
 					cleanup
 				fi
 				exit
