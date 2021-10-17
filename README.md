@@ -29,3 +29,4 @@ random movie.
 - `search "Movie Title"` Search your watchlist for one or more movies. Place each title within its own set of quotes.
 - `seen` List the contents of your seenlist
 - `watched "Movie Title"` Remove one or more movies from your watchlist and place them on your seenlist. Place each title within its own set of quotes. If a movie is not on your watchlist, it will still be added to your seenlist.
+- `version` Print version number
