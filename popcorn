@@ -320,7 +320,7 @@ while [ -n "${1}" ]; do
 			exit
 			;;
 		version|--version)
-			printf '%s 0.1.1\n' "${progname}"
+			printf '%s 0.1.2\n' "${progname}"
 			exit
 			;;
 		*)
@@ -378,6 +378,7 @@ if [ -z "$(cat "${listfile}")" ]; then
 		Y|y|Yes|yes|YES)
 			;;
 		*)
+			sort "${listfile}" > "${sortfile}" && mv "${sortfile}" "${listfile}"
 			echo "Bye!"
 			exit
 			;;
