@@ -74,7 +74,7 @@ remove_batch () {
 
 	while (( "$#" > 0 )); do
 		if grep -Fixq "${1}" "${listfile}"; then
-			sed -i "/^${1}$/d" "${listfile}"
+			sed -i "$(grep -Fixn "${1}" "${listfile}" | cut -d ":" -f 1)"d "${listfile}"
 			(( rmcount++ ))
 			shift
 		else
@@ -87,7 +87,7 @@ remove_batch () {
 }
 
 reselect () {
-	sed -i "/^${movie_candidate}$/d" "${listfile}"
+	sed -i "$(grep -Fixn "${movie_candidate}" "${listfile}" | cut -d ":" -f 1)"d "${listfile}"
 	echo "${movie_candidate}" >> "${notwatching}"
 	return
 }
@@ -159,7 +159,7 @@ search_batch () {
 			read -r -p "> "
 			case "${REPLY}" in
 				Y|y|Yes|YES|yes)
-					sed -i "/^${1}$/d" "${listfile}"
+					sed -i "$(grep -Fixn "${1}" "${listfile}" | cut -d ":" -f 1)"d "${listfile}"
 					echo "Removed '${1}' from your watchlist."
 					;;
 				*)
@@ -184,7 +184,7 @@ search_batch () {
 }
 
 update_list () {
-	sed -i "/^${movie_last}$/d" "${listfile}"
+	sed -i "$(grep -Fixn "${movie_last}" "${listfile}" | cut -d ":" -f 1)"d "${listfile}"
 	# do something better with this?
 	echo "${movie_last} on $(date +%D)" >> "${seenfile}"
 	sort "${seenfile}" -o "${sortfile}" && mv "${sortfile}" "${seenfile}"
@@ -236,7 +236,7 @@ watched_batch () {
 		echo "${1} on $(date +%D)" >> "${seenfile}"
 		(( addcount++ ))
 		if grep -Fixq "${1}" "${listfile}"; then
-			sed -i "/^${1}$/d" "${listfile}"
+			sed -i "$(grep -Fixn "${1}" "${listfile}" | cut -d ":" -f 1)"d "${listfile}"
 			(( rmcount++ ))
 		fi
 		shift
