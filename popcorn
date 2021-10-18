@@ -10,7 +10,6 @@ listdir="${HOME}/.local/share/${progname}"
 lastwatched="${listdir}/lastwatched.tmp"
 listbak="${listdir}/watchlist.bak"
 listfile="${listdir}/watchlist"
-notwatching="${listdir}/notwatching.tmp"
 seenbak="${listdir}/seenlist.bak"
 seenfile="${listdir}/seenlist"
 sortfile="${listdir}/sortfile.tmp"
@@ -35,14 +34,6 @@ add_batch () {
 	return
 }
 
-cleanup () {
-	cat "${notwatching}" >> "${listfile}"
-	sort "${listfile}" -o "${sortfile}" && mv "${sortfile}" "${listfile}"
-	rm "${notwatching}"
-	return
-}
-
-# replace this with just a recomendation to use add_batch??
 empty_list () {
 	clear
 	printf "Uh-oh, you don't seem to have any movies on your list.\n"
@@ -63,11 +54,6 @@ empty_list () {
 	return
 }
 
-gen_movie () {
-	shuf "${listfile}" | head -n 1
-	return
-}
-
 remove_batch () {
 	local rmcount
 	rmcount=0
@@ -83,12 +69,6 @@ remove_batch () {
 		fi
 	done
 	printf "Removed %d movie(s) from your watchlist.\n" "${rmcount}"
-	return
-}
-
-reselect () {
-	sed -i "$(grep -Fixn "${movie_candidate}" "${listfile}" | cut -d ":" -f 1)"d "${listfile}"
-	printf "%s\n" "${movie_candidate}" >> "${notwatching}"
 	return
 }
 
@@ -316,7 +296,7 @@ while [[ -n "${1}" ]]; do
 			exit
 			;;
 		version|--version)
-			printf '%s 0.1.2\n' "${progname}"
+			printf '%s 0.1.3\n' "${progname}"
 			exit
 			;;
 		*)
@@ -383,51 +363,36 @@ fi
 
 
 # pick a random movie from your list and offer it
-#
-# there MUST be a better way to do this, perhaps with 
-# sort -R "$listfile" | while read; do
-#	for i in $REPLY; do
 clear
 printf "Picking a movie for you...\n"
 while true; do
-	if [[ -s "${listfile}" ]]; then
-		movie_candidate="$(gen_movie)"
-		printf "Would you like to watch '%s'? [y/n/q]\n" "${movie_candidate}"
-		read -r -p "> "
+	while read -r title; do
+		printf "Would you like to watch '%s'? [y/n/q]\n" "${title}"
+		read -r -p "> " < /dev/tty
 		case "${REPLY}" in
-			Y|y|Yes|yes|YES)
+			Y|y|Yes|YES|yes)
 				printf "Great! I'll ask you how it went later.\n"
-				printf "%s\n" "${movie_candidate}" > "${lastwatched}"
-				if [[ -e "${notwatching}" ]]; then
-					cleanup
-				fi
+				printf "%s\n" "${title}" > "${lastwatched}"
 				exit
 				;;
-			Q|q|quit|Quit|QUIT)
-				printf "Bye!\n"
-				if [[ -e "${notwatching}" ]]; then
-					cleanup
-				fi
-				exit
-				;;
-			*)
-				reselect
+			N|n|No|NO|no)
 				continue
 				;;
-		esac
-	else
-		printf "There are no more movies on your list. Do you want to go through it again?\n"
-		read -r -p "> "
-		case "${REPLY}" in 
-			Y|y|Yes|YES|yes)
-				cleanup
-				continue 2
-				;;
 			*)
-				cleanup
 				printf "Bye!\n"
 				exit
 				;;
 		esac
-	fi
+	done < <(shuf "${listfile}")
+	printf "There are no more movies on your list. Do you want to go through it again?\n"
+	read -r -p "> "
+	case "${REPLY}" in
+		Y|y|Yes|YES|yes)
+			continue
+			;;
+		*)
+			printf "Bye!\n"
+			exit
+			;;
+	esac
 done
