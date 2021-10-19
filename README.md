@@ -18,15 +18,15 @@ random movie.
 
 <h4>Commands:</h4>
 
-- `add "Movie Title"` Add one or more movies to your watchlist. Place each title within its own set of quotes.
+- `add "Title"` Add one or more movies to your watchlist. Place each title within its own set of quotes.
 - `backup` Create a backup of your lists
 - `count` Display the amount of movies in your watchlist
 - `help` Display program use information
 - `list` List the contents of your watchlist
-- `remove "Movie Title"` Remove one or more movies from your watchlist. Place each title within its own set of quotes.
+- `remove "Title"` Remove one or more movies from your watchlist. Place each title within its own set of quotes.
 - `reset` Clear either the watchlist, seenlist, or both
 - `restore` Restore your lists from backup
-- `search "Movie Title"` Search your watchlist for one or more movies. Place each title within its own set of quotes.
+- `search "Title"` Search your watchlist for one or more movies. Place each title within its own set of quotes.
 - `seen` List the contents of your seenlist
-- `watched "Movie Title"` Remove one or more movies from your watchlist and place them on your seenlist. Place each title within its own set of quotes. If a movie is not on your watchlist, it will still be added to your seenlist.
+- `watched "Title"` Remove one or more movies from your watchlist and place them on your seenlist. Place each title within its own set of quotes. If a movie is not on your watchlist, it will still be added to your seenlist.
 - `version` Print version number

@@ -134,7 +134,7 @@ reset () {
 			exit
 			;;
 	esac
-	rm "${lastwatched}"
+	rm "${lastwatched}" > /dev/null 2>&1
 }
 
 search_batch () {
@@ -172,29 +172,29 @@ usage () {
 
 	Usage: 
 
-	  ${progname} [command]
+	  ${progname} [command ["<title>"...]]
 
 	  When no command is given, ${progname} functions in interactive mode.
 
 	Commands:
 
-	  add "Movie Title"      Add one or more movies to your watchlist. Place each title within
-                         its own set of quotes.
-	  backup                 Create a backup of your lists
-	  count                  Display the amount of movies in your watchlist
-	  help                   Display program use information
-	  list                   List the contents of your watchlist
-	  remove "Movie Title"   Remove one or more movies from your watchlist. Place each title within
-                         its own set of quotes.
-	  reset                  Clear either the watchlist, seenlist, or both
-	  restore                Restore your lists from backup
-	  search "Movie Title"   Search your watchlist for one or more movies. Place each title within
-                         its own set of quotes.
-	  seen                   List the contents of your seenlist
-	  watched "Movie Title"  Remove one or more movies from your watchlist and place them on your
-                         seenlist. Place each title within its own set of quotes. If a movie is not
-                         on your watchlist, it will still be added to your seenlist.
-	  version                Print version number
+	  add "Title"         Add one or more movies to your watchlist. Place each title within
+                      its own set of quotes.
+	  backup              Create a backup of your lists
+	  count               Display the amount of movies in your watchlist
+	  help                Display program use information
+	  list                List the contents of your watchlist
+	  remove "Title"      Remove one or more movies from your watchlist. Place each title within
+                      its own set of quotes.
+	  reset               Clear either the watchlist, seenlist, or both
+	  restore             Restore your lists from backup
+	  search "Title"      Search your watchlist for one or more movies. Place each title within
+                      its own set of quotes.
+	  seen                List the contents of your seenlist
+	  watched "Title"     Remove one or more movies from your watchlist and place them on your
+                      seenlist. Place each title within its own set of quotes. If a movie is not
+                      on your watchlist, it will still be added to your seenlist.
+	  version             Print version number
 
 	EOF
 	return
@@ -235,7 +235,7 @@ fi
 
 
 # process command line options
-while [[ -n "${1}" ]]; do
+if (( "$#" > 0 )); then
 	case "${1}" in
 		add)
 			shift
@@ -290,7 +290,7 @@ while [[ -n "${1}" ]]; do
 			exit
 			;;
 		version|--version)
-			printf '%s 0.1.3\n' "${progname}"
+			printf '%s 0.2.0\n' "${progname}"
 			exit
 			;;
 		*)
@@ -298,8 +298,7 @@ while [[ -n "${1}" ]]; do
 			exit 1
 			;;
 	esac
-	shift
-done
+fi
 
 
 # check to see if you watched the movie you chose last time the program was run
